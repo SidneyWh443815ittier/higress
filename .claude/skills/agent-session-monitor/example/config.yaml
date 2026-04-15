@@ -1,0 +1,65 @@
+# Agent Session Monitor Configuration
+# This file configures the session monitor for Higress access log processing
+
+# Log file settings
+log:
+  # Path to the Higress access log file
+  path: "/var/log/higress/access.log"
+  # Log format: 'v1' or 'v2'
+  format: "v2"
+  # How often to poll the log file for new entries (in seconds)
+  poll_interval: 5
+  # Maximum number of lines to process per poll cycle
+  max_lines_per_cycle: 1000
+
+# Session URL generation settings
+session:
+  # Base URL for the session replay viewer
+  base_url: "https://your-higress-dashboard.example.com/sessions"
+  # Session URL expiry in hours (0 = no expiry)
+  url_expiry_hours: 24
+  # Fields to include in the session URL query string
+  include_fields:
+    - request_id
+    - trace_id
+    - upstream_host
+    - timestamp
+
+# Filter settings — only process log lines matching these criteria
+filter:
+  # Only process requests with these HTTP methods (empty = all methods)
+  methods: []
+  # Only process requests matching these path prefixes (empty = all paths)
+  path_prefixes:
+    - "/api/"
+    - "/v1/"
+  # Minimum response time in milliseconds to trigger session recording (0 = all)
+  min_response_time_ms: 0
+  # HTTP status codes to always capture (empty = all)
+  capture_status_codes:
+    - 500
+    - 502
+    - 503
+    - 504
+
+# Output settings
+output:
+  # Output format: 'json', 'text', or 'csv'
+  format: "json"
+  # Output destination: 'stdout', 'file', or 'webhook'
+  destination: "stdout"
+  # File path (only used when destination is 'file')
+  file_path: "/var/log/higress/session_monitor_output.log"
+  # Webhook URL (only used when destination is 'webhook')
+  webhook_url: ""
+  # Webhook timeout in seconds
+  webhook_timeout_seconds: 10
+
+# Metrics settings
+metrics:
+  # Enable Prometheus metrics endpoint
+  enabled: false
+  # Port to expose metrics on
+  port: 9090
+  # Path for the metrics endpoint
+  path: "/metrics"
