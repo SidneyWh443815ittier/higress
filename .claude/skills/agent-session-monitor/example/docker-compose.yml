@@ -1,0 +1,46 @@
+# Docker Compose configuration for agent-session-monitor example
+# Runs a local Higress instance with session monitoring enabled
+
+version: '3.8'
+
+services:
+  higress:
+    image: higress-registry.cn-hangzhou.cr.aliyuncs.com/higress/higress:latest
+    container_name: higress-session-monitor
+    ports:
+      - "8080:8080"   # HTTP gateway port
+      - "8443:8443"   # HTTPS gateway port
+      - "15051:15051" # Admin API port
+    volumes:
+      - ./config.yaml:/etc/higress/config.yaml:ro
+      - higress-logs:/var/log/higress
+    environment:
+      - HIGRESS_LOG_LEVEL=info
+      - HIGRESS_ACCESS_LOG_FORMAT=json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  session-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: session-monitor
+    depends_on:
+      higress:
+        condition: service_healthy
+    volumes:
+      - higress-logs:/var/log/higress:ro
+      - ./config.yaml:/etc/session-monitor/config.yaml:ro
+    environment:
+      - LOG_FILE=/var/log/higress/access.log
+      - CLAWDBOT_BASE_URL=${CLAWDBOT_BASE_URL:-https://clawdbot.example.com}
+      - POLL_INTERVAL=5s
+    restart: unless-stopped
+
+volumes:
+  higress-logs:
+    driver: local
